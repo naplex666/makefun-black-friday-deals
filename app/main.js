@@ -112,6 +112,9 @@ function wireList() {
 function syncCompare() {
   const bar = app.querySelector("#compare-bar");
   if (bar) bar.innerHTML = barHtml(pickedDeals(deals));
+  // The bar is sticky at the top of the list, and the list gets bottom padding
+  // as tall as the bar while it is open, so no deal row ever sits under it.
+  document.body.classList.toggle("compare-open", count() > 0);
   app.querySelectorAll(".cmp-btn").forEach((b) => {
     if (!b.dataset.id) return;
     const on = has(b.dataset.id);

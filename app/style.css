@@ -235,14 +235,13 @@ footer p { margin: 6px 0; }
 .cmp-btn[aria-pressed="true"] { background: var(--green-bg); border-color: var(--green); color: var(--green); }
 .cmp-btn:disabled { opacity: 0.45; cursor: default; }
 .cmp-hint { font-size: 14px; color: var(--muted); }
-#compare-bar { margin-top: 14px; }
+#compare-bar { position: sticky; top: 0; z-index: 20; margin: 0 0 12px; }
+#compare-bar:empty { display: none; }
+/* When the bar is open, the list gets bottom padding as tall as the bar, so the
+   last row can always be scrolled fully clear of it. */
+body.compare-open #app { padding-bottom: 96px; }
 .compare-bar-inner {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 12px;
-  z-index: 20;
-  width: min(1060px, calc(100% - 32px));
+  width: 100%;
   display: flex;
   gap: 10px;
   align-items: center;

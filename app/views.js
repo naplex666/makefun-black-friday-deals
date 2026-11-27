@@ -74,8 +74,8 @@ export function list(deals, shown, state) {
 </div>
 ${filterBar(deals, state)}
 <p class="count">Showing <b>${shown.length}</b> of ${deals.length} deals</p>
-<ul class="deals">${rows(shown)}</ul>
-<div id="compare-bar"></div>`;
+<div id="compare-bar"></div>
+<ul class="deals">${rows(shown)}</ul>`;
 }
 
 export function deal(d, related) {
