@@ -1,5 +1,6 @@
 // HTML for each page, built from the deal data. Every value is escaped before it goes into the page.
 import { percentOff, categoriesOf, storesOf, statsOf } from "./filters.js";
+import { has as isPicked, count as pickedCount, MAX_COMPARE } from "./compare.js";
 
 const escape = (s) => String(s).replace(/[&<>\"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const usd = (n) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`;
@@ -55,7 +56,7 @@ export function rows(shown) {
   </div>
   <div>${badge(d.signal)}</div>
   <div class="price"><span class="sale">${usd(d.price)}</span><br><span class="was"><s>${usd(d.was)}</s> <span class="off">${percentOff(d)}% off</span></span></div>
-  <div class="deal-links"><a href="#/deal/${encodeURIComponent(d.id)}">Details &rarr;</a><a href="${escape(d.url)}" rel="noopener">At ${escape(d.store)} &nearr;</a></div>
+  <div class="deal-links"><a href="#/deal/${encodeURIComponent(d.id)}">Details &rarr;</a><a href="${escape(d.url)}" rel="noopener">At ${escape(d.store)} &nearr;</a><button type="button" class="cmp-btn" data-id="${escape(d.id)}" aria-pressed="${isPicked(d.id)}"${!isPicked(d.id) && pickedCount() >= MAX_COMPARE ? " disabled" : ""}>${isPicked(d.id) ? "✓ Compared" : "+ Compare"}</button></div>
 </li>`,
     )
     .join("");
@@ -73,7 +74,8 @@ export function list(deals, shown, state) {
 </div>
 ${filterBar(deals, state)}
 <p class="count">Showing <b>${shown.length}</b> of ${deals.length} deals</p>
-<ul class="deals">${rows(shown)}</ul>`;
+<ul class="deals">${rows(shown)}</ul>
+<div id="compare-bar"></div>`;
 }
 
 export function deal(d, related) {
@@ -101,6 +103,7 @@ export function deal(d, related) {
     <dt>Read in</dt><dd><a href="${escape(d.sourceUrl)}" rel="noopener">${escape(d.source)}</a></dd>
   </dl>
   <p><a class="store-btn" href="${escape(d.url)}" rel="noopener">Find it at ${escape(d.store)} &nearr;</a></p>
+  <p><button type="button" class="cmp-btn" data-id="${escape(d.id)}" aria-pressed="${isPicked(d.id)}">${isPicked(d.id) ? "✓ Compared" : "+ Compare"}</button> <span class="cmp-hint">Add it to a side-by-side comparison with up to two other deals.</span></p>
   <p style="color:#5d6470;font-size:14px">Price read ${day(d.checked)}. Prices change fast on Black Friday &mdash; the store page is the final word.</p>
 </div>
 ${rel}`;

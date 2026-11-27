@@ -10,6 +10,7 @@
 import { deals } from "./data.js";
 import { applyFilters, percentOff, SIGNAL_RANK } from "./filters.js";
 import { deal, list, missing } from "./views.js";
+import { toggle, clear, has, pickedDeals, barHtml, tableHtml, count, MAX_COMPARE } from "./compare.js";
 
 const app = document.getElementById("app");
 
@@ -19,7 +20,12 @@ function render() {
   window.__shotReady = false;
   const hash = location.hash || "#/";
   const dealMatch = hash.match(/^#\/deal\/([^/?]+)/);
-  if (dealMatch) {
+  if (hash === "#/compare") {
+    const picked = pickedDeals(deals);
+    document.title = "Compare deals | TrueDeal";
+    app.innerHTML = tableHtml(picked);
+    document.querySelectorAll(".site-header nav a").forEach((a) => a.classList.remove("active"));
+  } else if (dealMatch) {
     const found = deals.find((d) => d.id === decodeURIComponent(dealMatch[1]));
     document.title = `${found ? found.title : "Not found"} | TrueDeal`;
     if (!found) {
@@ -51,6 +57,7 @@ function render() {
     });
     wireList();
   }
+  syncCompare();
   window.scrollTo(0, 0);
   window.__shotReady = true;
 }
@@ -98,6 +105,45 @@ function wireList() {
     });
   });
 }
+
+// The compare bar lives on the list page and the compare buttons live on every row and detail page.
+// One delegated listener on #app survives re-renders, so the buttons keep working after a search or
+// filter change; syncCompare fills the bar and keeps every button's label and state honest.
+function syncCompare() {
+  const bar = app.querySelector("#compare-bar");
+  if (bar) bar.innerHTML = barHtml(pickedDeals(deals));
+  app.querySelectorAll(".cmp-btn").forEach((b) => {
+    if (!b.dataset.id) return;
+    const on = has(b.dataset.id);
+    b.setAttribute("aria-pressed", String(on));
+    b.textContent = on ? "✓ Compared" : "+ Compare";
+    b.disabled = !on && count() >= MAX_COMPARE;
+  });
+}
+
+app.addEventListener("click", (event) => {
+  const btn = event.target.closest(".cmp-btn");
+  if (btn && btn.dataset.id) {
+    toggle(btn.dataset.id);
+    syncCompare();
+    return;
+  }
+  const remove = event.target.closest(".cmp-remove");
+  if (remove) {
+    toggle(remove.dataset.remove);
+    syncCompare();
+    return;
+  }
+  if (event.target.closest("#compare-go")) {
+    location.hash = "#/compare";
+    return;
+  }
+  if (event.target.closest("#compare-clear") || event.target.closest("#compare-clear-table")) {
+    clear();
+    if ((location.hash || "") === "#/compare") render();
+    else syncCompare();
+  }
+});
 
 window.addEventListener("hashchange", render);
 render();
