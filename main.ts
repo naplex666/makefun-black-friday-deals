@@ -1,16 +1,11 @@
-// A working black-friday-deal-finder-01 entry (Node 22, standard library only): the site is this directory's app/
-// folder, plain static files a browser opens at app/index.html (ES modules, CSS, no build step), its deals held in its
-// own files: nothing it runs, styles or shows loads over the network, and each deal links out to its store. The program
-// hands it in: it copies app/ and screenshots/ from beside this file to /output and writes /output/dossier.json, the
-// summary the judge reads (your screenshots, the first load's files and bytes, and your source), with the vendored
-// make.fun library. Leave vendor/makefun-frontend.ts as it is: the scorer requires dossier.json to be byte for byte
+// TrueDeal's packager for black-friday-deal-finder-01 (Node 22, standard library only). The site is this
+// directory's app/ folder — plain static files a browser opens at app/index.html (ES modules, CSS, no build
+// step), its deals in app/data.js. Nothing the site runs, styles or shows loads over the network; each deal
+// only links out to its store. This program hands the entry in: it checks the deals first, then copies app/
+// and screenshots/ from beside this file to /output and writes /output/dossier.json, the summary the judge
+// reads (your screenshots, the first load's files and bytes, and your source), with the vendored make.fun
+// library. Leave vendor/makefun-frontend.ts as it is: the scorer requires dossier.json to be byte for byte
 // what its own copy writes.
-//
-// A starting point, not a winner: a plain deal list, eight deals and a page for each, read from a public deals roundup
-// before the opening. Build the deal finder the brief asks for in app/ (deals your agent found and checked itself, each
-// with its store link, sale price, usual price and check time; search and filters; a phone layout; its look), put 3
-// or 4 PNG or JPEG screenshots of it running in screenshots/ (the first by name is the cover; one may be a 390 x 844
-// phone view; shots.json says which views this starter's were taken of), and run it.
 //
 // Serve it locally with `node serve.ts`, then open http://localhost:8080.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
@@ -18,11 +13,34 @@
 
 import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildDossier } from './vendor/makefun-frontend.ts';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+
+// Package-time deal check: a deal with a missing field, a sale price that is not below its usual price, an
+// unknown signal, an unreadable check time or a duplicated id would go out as a broken or dishonest entry,
+// so refuse to package it and say which deal is wrong. This runs before anything is copied.
+const { deals } = await import(pathToFileURL(join(here, 'app', 'data.js')).href);
+const REQUIRED = ['id', 'title', 'store', 'category', 'price', 'was', 'url', 'checked', 'source', 'sourceUrl', 'signal', 'signalNote'];
+const SIGNALS = new Set(['new-low', 'strong', 'routine', 'unknown']);
+const seenIds = new Set();
+for (const d of deals) {
+  for (const f of REQUIRED) {
+    if (!(f in d)) throw new Error(`deal ${d.id ?? '(no id)'} is missing ${f}`);
+  }
+  if (typeof d.price !== 'number' || typeof d.was !== 'number' || !(d.price < d.was)) {
+    throw new Error(`deal ${d.id} has a sale price (${d.price}) that is not below its usual price (${d.was})`);
+  }
+  if (!SIGNALS.has(d.signal)) throw new Error(`deal ${d.id} has an unknown signal ${d.signal}`);
+  if (Number.isNaN(Date.parse(d.checked))) throw new Error(`deal ${d.id} has an unreadable check time ${d.checked}`);
+  if (seenIds.has(d.id)) throw new Error(`deal id ${d.id} appears twice`);
+  seenIds.add(d.id);
+}
+const checkedDay = deals.map((d) => d.checked.slice(0, 10)).sort().pop();
+const newLows = deals.filter((d) => d.signal === 'new-low').length;
+console.log(`TrueDeal packaged: ${deals.length} deals, ${newLows} new-low, all prices checked ${checkedDay}.`);
 
 mkdirSync(out, { recursive: true });
 cpSync(join(here, 'app'), join(out, 'app'), { recursive: true });

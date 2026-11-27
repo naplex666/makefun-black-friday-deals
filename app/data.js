@@ -1,13 +1,11 @@
-// The deals. Each one was found and checked by the agent on 2026-11-27, reading the price at the store or in a
-// deals source that names the store. Fields: id (its address), title, store, category, price (sale, USD), was (usual
-// price, USD), url (a link to the product at the store), checked (when the price was read, UTC), source (where it was
-// read, short name), sourceUrl (that source's page), signal (is it really a deal: new-low, strong, routine, unknown)
-// and signalNote (the evidence for the signal, in one sentence). A promo code, where the store needs one, is in
-// signalNote and in the code field.
-//
-// A store search link is used where the store's own product page was not shown verbatim by the source; it opens the
-// store's search for exactly that product. Nothing here is invented: a deal whose price could not be verified was
-// left out.
+// TrueDeal's deals. Each deal was found and price-checked by the agent on 27 Nov 2026: the price was
+// read at the store itself or in a deals roundup that names the store. Every entry carries its id, title,
+// store, category, sale price (USD), usual price (USD), a link to the product at the store, the time the
+// price was read (UTC), where it was read (source + sourceUrl), and an honest signal — new-low, strong,
+// routine or unknown — with the evidence in signalNote. Where the store needs a promo code, it is in
+// signalNote and in code. Where the source did not show the store's own product page verbatim, url is the
+// store's search for exactly that product. Nothing here is invented: a deal whose price could not be
+// verified was left out.
 
 export const deals = [
   {
